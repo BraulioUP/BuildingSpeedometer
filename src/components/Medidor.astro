@@ -3,33 +3,77 @@
 ---
 
 <script>
-  declare global {
-    interface Window {
-      loadSpeed: () => Promise<void>;
-    }
-  }
+  window.addEventListener("DOMContentLoaded", (event) => {
+    const downloadSize = 50000000; // Tamaño del archivo en bytes para pruebas
+    const uploadSize = 50000000; // Tamaño del archivo en bytes para pruebas
 
-  window.loadSpeed = async () => {
-    try {
-      const response = await fetch("/api/speedtest");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (data.speed) {
-        console.log(`Velocidad de descarga: ${data.speed} Mbps`);
-      }
-    } catch (error) {
-      console.error("Error al obtener la velocidad de Internet:", error);
+    function calculateSpeed(size, startTime, endTime) {
+      const duration = (endTime - startTime) / 1000; // Duración en segundos
+      const bitsLoaded = size * 8; // Tamaño en bits
+      const speedBps = bitsLoaded / duration; // Velocidad en bps
+      const speedKbps = speedBps / 1024; // Velocidad en Kbps
+      const speedMbps = speedKbps / 1024; // Velocidad en Mbps
+      return speedMbps;
     }
-  };
 
-  const button = document.getElementById("testSpeedButton");
-  if (button) {
-    button.addEventListener("click", window.loadSpeed);
-  } else {
-    console.error("No se pudo encontrar el botón 'testSpeedButton'");
-  }
+    window.loadSpeed = async () => {
+      const testSpeedButton = document.getElementById("testSpeedButton");
+      testSpeedButton.disabled = true;
+      testSpeedButton.textContent = "Midiendo...";
+      document.getElementById("downloadSpeed").textContent = "0.00";
+      document.getElementById("uploadSpeed").textContent = "0.00";
+
+      // Simula la descarga
+      const downloadStartTime = new Date().getTime();
+      try {
+        await fetch(
+          "https://th.bing.com/th/id/R.5bd0bb702e1450b38c41120ca8de60f0?rik=uIIqf3m3C1Y9MA&pid=ImgRaw&r=0&sres=1&sresct=1",
+        );
+        const downloadEndTime = new Date().getTime();
+        const downloadSpeed = calculateSpeed(
+          downloadSize,
+          downloadStartTime,
+          downloadEndTime,
+        );
+        document.getElementById("downloadSpeed").textContent =
+          downloadSpeed.toFixed(2);
+      } catch (error) {
+        console.error("Error al descargar:", error);
+        document.getElementById("downloadSpeed").textContent = "Error";
+      }
+
+      // Simula la carga
+      const uploadStartTime = new Date().getTime();
+      try {
+        await fetch(
+          "https://th.bing.com/th/id/R.5bd0bb702e1450b38c41120ca8de60f0?rik=uIIqf3m3C1Y9MA&pid=ImgRaw&r=0&sres=1&sresct=1",
+          {
+            method: "POST",
+            body: new Blob([new ArrayBuffer(uploadSize)]),
+          },
+        );
+        const uploadEndTime = new Date().getTime();
+        const uploadSpeed = calculateSpeed(
+          uploadSize,
+          uploadStartTime,
+          uploadEndTime,
+        );
+        document.getElementById("uploadSpeed").textContent =
+          uploadSpeed.toFixed(2);
+
+
+      } catch (error) {
+        console.error("Error al subir:", error);
+        document.getElementById("uploadSpeed").textContent = "Error";
+      }
+
+      testSpeedButton.disabled = false;
+      testSpeedButton.textContent = "Comenzar Test de Velocidad";
+    };
+
+    const testSpeedButton = document.getElementById("testSpeedButton");
+    testSpeedButton.onclick = loadSpeed;
+  });
 </script>
 <main class="mt-20 flex flex-col items-center justify-center">
   <div class="p-8 rounded-lg shadow max-w-2xl">
@@ -38,7 +82,7 @@
         Tu velocidad de internet es de
       </h2>
       <div class="text-8xl font-extrabold flex justify-center items-baseline">
-        <span>150</span>
+        <span id="downloadSpeed"></span>
         <span class="text-4xl font-medium ml-2">Mbps</span>
       </div>
       <div class="mt-8 flex justify-center">
@@ -60,7 +104,8 @@
       </div>
       <div class="stat">
         <div class="stat-title">Descarga</div>
-        <div class="stat-value">200<span class="text-sm">Mbps</span></div>
+        <div id="uploadSpeed" class="stat-value"></div>
+        <span class="text-sm">Mbps</span>
       </div>
       <div class="stat">
         <div class="stat-title">Carga</div>
