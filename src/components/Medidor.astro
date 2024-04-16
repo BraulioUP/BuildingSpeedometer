@@ -2,6 +2,35 @@
 
 ---
 
+<script>
+  declare global {
+    interface Window {
+      loadSpeed: () => Promise<void>;
+    }
+  }
+
+  window.loadSpeed = async () => {
+    try {
+      const response = await fetch("/api/speedtest");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.speed) {
+        console.log(`Velocidad de descarga: ${data.speed} Mbps`);
+      }
+    } catch (error) {
+      console.error("Error al obtener la velocidad de Internet:", error);
+    }
+  };
+
+  const button = document.getElementById("testSpeedButton");
+  if (button) {
+    button.addEventListener("click", window.loadSpeed);
+  } else {
+    console.error("No se pudo encontrar el botón 'testSpeedButton'");
+  }
+</script>
 <main class="mt-20 flex flex-col items-center justify-center">
   <div class="p-8 rounded-lg shadow max-w-2xl">
     <div class="text-center">
@@ -13,7 +42,11 @@
         <span class="text-4xl font-medium ml-2">Mbps</span>
       </div>
       <div class="mt-8 flex justify-center">
-        <button class="rounded-full p-4">
+        <button
+          id="testSpeedButton"
+          onclick="loadSpeed()"
+          class="rounded-full p-4"
+        >
           <img src="/progress-svgrepo-com.svg" />
         </button>
       </div>
